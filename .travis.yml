@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - "1.14"
+  - master
+
+before_install:
+  - go get -u github.com/marthjod/achtwache/...
+  - go get -u golang.org/x/lint
+  - go get -u github.com/kisielk/errcheck
+  - go get -u honnef.co/go/tools/cmd/staticcheck
+
+script:
+  - make vet
+  - make lint
+  - make errcheck
+  - make staticcheck
+  - make test
