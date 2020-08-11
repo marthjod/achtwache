@@ -1,21 +1,31 @@
 package main
 
 import (
-	"os"
 	"context"
+	"os"
 
 	"github.com/marthjod/achtwache/client"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubernetes/pkg/api/v1/resource"
 )
 
 func main() {
-
 	var (
 		namespace  = os.Getenv("NAMESPACE")
 		kubeConfig = os.Getenv("KUBE_CONFIG")
+		logLevel   = os.Getenv("LOGLEVEL")
 	)
+
+	if logLevel == "" {
+		logLevel = "info"
+	}
+	lvl, err := zerolog.ParseLevel(logLevel)
+	if err != nil {
+		log.Warn().Err(err).Msg("parsing log level")
+	}
+	zerolog.SetGlobalLevel(lvl)
 
 	ctx := context.Background()
 
