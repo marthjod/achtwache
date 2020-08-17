@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"net/http"
 	"os"
 
 	"github.com/marthjod/achtwache/client"
@@ -15,8 +15,13 @@ func main() {
 		namespace  = os.Getenv("NAMESPACE")
 		kubeConfig = os.Getenv("KUBE_CONFIG")
 		logLevel   = os.Getenv("LOGLEVEL")
+		listenAddr = os.Getenv("LISTEN_ADDR")
 	)
 
+	// TODO
+	if listenAddr == "" {
+		listenAddr = ":8080"
+	}
 	if logLevel == "" {
 		logLevel = "info"
 	}
@@ -25,8 +30,6 @@ func main() {
 		log.Warn().Err(err).Msg("parsing log level")
 	}
 	zerolog.SetGlobalLevel(lvl)
-
-	ctx := context.Background()
 
 	var opts = []client.Option{
 		client.WithNamespace(namespace),
@@ -44,17 +47,8 @@ func main() {
 		log.Fatal().Err(err).Msg("creating client")
 	}
 
-	hdlr := &handler.Handler{
-		Client: client,
-	}
-	nodes, err := hdlr.Update(ctx, 4)
-	if err != nil {
-		log.Fatal().Err(err).Msg("updating")
-	}
-	for _, node := range nodes {
-		log.Debug().Msgf("node: %s", node.Name)
-		for _, pod := range node.Pods {
-			log.Debug().Msgf("  %s (%s %s)", pod.Name, pod.CPU.String(), pod.Memory.String())
-		}
-	}
+	hdlr := handler.New(client)
+	http.Handle("/", hdlr)
+	log.Info().Msgf("listening on %s", listenAddr)
+	log.Fatal().Err(http.ListenAndServe(listenAddr, nil)).Msg("")
 }

@@ -12,8 +12,8 @@ const (
 )
 
 type Node struct {
-	Name string
-	Pods []*Pod
+	Name string `json:"name"`
+	Pods []*Pod `json:"pods"`
 }
 
 func (n *Node) FromK8s(node v1.Node) {
@@ -29,9 +29,9 @@ func (n *Node) AddPods(pods []v1.Pod) {
 }
 
 type Pod struct {
-	Name   string
-	Memory res.Quantity
-	CPU    res.Quantity
+	Name   string       `json:"name"`
+	Memory res.Quantity `json:"memory"`
+	CPU    res.Quantity `json:"cpu"`
 }
 
 func (p *Pod) FromK8s(pod v1.Pod) {
