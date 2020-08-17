@@ -6,6 +6,8 @@ import (
 
 	"github.com/marthjod/achtwache/client"
 	"github.com/marthjod/achtwache/handler"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -16,7 +18,15 @@ func main() {
 		kubeConfig = os.Getenv("KUBE_CONFIG")
 		logLevel   = os.Getenv("LOGLEVEL")
 		listenAddr = os.Getenv("LISTEN_ADDR")
+
+		httpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name: "http_request_duration_seconds",
+			Help: "Duration of all HTTP requests",
+		}, []string{"code", "method"})
 	)
+
+	promRegistry := prometheus.NewRegistry()
+	promRegistry.MustRegister(httpRequestDuration)
 
 	// TODO
 	if listenAddr == "" {
@@ -48,7 +58,8 @@ func main() {
 	}
 
 	hdlr := handler.New(client)
-	http.Handle("/", hdlr)
+	http.Handle("/", promhttp.InstrumentHandlerDuration(httpRequestDuration, hdlr))
+	http.Handle("/metrics", promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{}))
 	log.Info().Msgf("listening on %s", listenAddr)
 	log.Fatal().Err(http.ListenAndServe(listenAddr, nil)).Msg("")
 }
