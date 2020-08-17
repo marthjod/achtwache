@@ -5,10 +5,9 @@ import (
 	"os"
 
 	"github.com/marthjod/achtwache/client"
+	"github.com/marthjod/achtwache/handler"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/api/v1/resource"
 )
 
 func main() {
@@ -44,11 +43,18 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("creating client")
 	}
-	pods, _ := client.Clientset.CoreV1().Pods("").List(ctx, v1.ListOptions{})
 
-	for _, pod := range pods.Items {
-		log.Debug().Msgf("%s", pod.Name)
-		requests, limits := resource.PodRequestsAndLimits(&pod)
-		log.Debug().Msgf("requests: %v, limits: %v", requests, limits)
+	hdlr := &handler.Handler{
+		Client: client,
+	}
+	nodes, err := hdlr.Update(ctx, 4)
+	if err != nil {
+		log.Fatal().Err(err).Msg("updating")
+	}
+	for _, node := range nodes {
+		log.Debug().Msgf("node: %s", node.Name)
+		for _, pod := range node.Pods {
+			log.Debug().Msgf("  %s (%s %s)", pod.Name, pod.CPU.String(), pod.Memory.String())
+		}
 	}
 }
