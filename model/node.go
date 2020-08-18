@@ -42,5 +42,6 @@ func (p *Pod) FromK8s(pod v1.Pod) {
 	p.Memory = req[memoryKey]
 	p.CPU = req[cpuKey]
 	p.MemoryDec, _ = p.Memory.AsInt64()
+	// TODO:
 	p.CPUDec, _ = p.CPU.AsInt64()
 }

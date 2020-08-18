@@ -1,7 +1,23 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js"></script>
+        <script src="https://cdn.anychart.com/releases/v8/js/anychart-ui.min.js"></script>
+        <script src="https://cdn.anychart.com/releases/v8/js/anychart-exports.min.js"></script>
+        <script src="https://cdn.anychart.com/releases/v8/js/anychart-mekko.min.js"></script>
+        <link href="https://cdn.anychart.com/releases/v8/css/anychart-ui.min.css" type="text/css" rel="stylesheet">
+        <link href="https://cdn.anychart.com/releases/v8/fonts/css/anychart-font.min.css" type="text/css" rel="stylesheet">
+        <style type="text/css">
+            html,
+            body,
+            #container {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        </style>
+        <meta charset="utf-8">
         <script type="text/javascript">
         {{/* var margin = {top: 30, right: 30, bottom: 70, left: 60},
             width = 460 - margin.left - margin.right,
@@ -13,42 +29,23 @@
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
                     var nodes = JSON.parse(xhr.responseText);
-                    {{/* window.console.log(nodes); */}}
                     var keys = nodes.map(node => node.name);
-                    var stackdata = keys.map(function(c) {
-                    console.log(c);
-                    return nodes.map(function(d, i) {
-                        if (d.pods[i] !== undefined) {
-                            return {x: i, y: d.pods[i].memory};
-                        }
-                    })
-                    });
-
-                    var svg = d3.select("#visualization")
-                        .append("svg")
-                        .attr("width", 250)
-                        .attr("height", 250);
-                        // Set up stack method
-                    var stack = d3.stack();
-
-                    var colors = ["gold", "silver"]
-// Add a group for each row of data
-var groups = svg.selectAll("g")
-  .data(stackdata)
-  .enter()
-  .append("g")
-  .style("fill", function(d, i) { return colors[i]})
-// Add a rect for each data value
-var rects = groups.selectAll("rect")
-  .data(function(d) {return d})
-  .enter()
-  .append("rect")
-  .attr("x", function(d, i) {return i*28})
-  .attr("y", function(d) {return d.y0})
-  .attr("height", function(d) {return d.y})
-  .attr("width", 24)
+                    var stackdata = nodes.map(function(node, idx) { var mem = node.pods.map(pod => pod.memory_dec); mem.unshift(node.name); return mem; });
+                    console.log(stackdata);
+                    var data = {
+                        rows: stackdata
+                    };
+                    // create mosaic chart
+                    var chart = anychart.mosaic();
+                    // set chart data
+                    chart.data(data);
+                    // set union tooltip
+                    chart.tooltip().displayMode('union');
+                    // set container id for the chart
+                    chart.container('chart');
+                    // initiate chart drawing
+                    chart.draw();
                 }
-
             };
             xhr.open("GET", "/nodes", true);
             xhr.setRequestHeader("Accept", "application/json");
@@ -56,7 +53,6 @@ var rects = groups.selectAll("rect")
         </script>
     <head>
     <body>
-        <div id="visualization">
-        </div>
+        <div id="chart"></div>
     </body>
 </html>
