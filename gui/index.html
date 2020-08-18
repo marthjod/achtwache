@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script type="text/javascript">
+        {{/* var margin = {top: 30, right: 30, bottom: 70, left: 60},
+            width = 460 - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom; */}}
+
+
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                    var nodes = JSON.parse(xhr.responseText);
+                    {{/* window.console.log(nodes); */}}
+                    var keys = nodes.map(node => node.name);
+                    var stackdata = keys.map(function(c) {
+                    console.log(c);
+                    return nodes.map(function(d, i) {
+                        if (d.pods[i] !== undefined) {
+                            return {x: i, y: d.pods[i].memory};
+                        }
+                    })
+                    });
+
+                    var svg = d3.select("#visualization")
+                        .append("svg")
+                        .attr("width", 250)
+                        .attr("height", 250);
+                        // Set up stack method
+                    var stack = d3.stack();
+
+                    var colors = ["gold", "silver"]
+// Add a group for each row of data
+var groups = svg.selectAll("g")
+  .data(stackdata)
+  .enter()
+  .append("g")
+  .style("fill", function(d, i) { return colors[i]})
+// Add a rect for each data value
+var rects = groups.selectAll("rect")
+  .data(function(d) {return d})
+  .enter()
+  .append("rect")
+  .attr("x", function(d, i) {return i*28})
+  .attr("y", function(d) {return d.y0})
+  .attr("height", function(d) {return d.y})
+  .attr("width", 24)
+                }
+
+            };
+            xhr.open("GET", "/nodes", true);
+            xhr.setRequestHeader("Accept", "application/json");
+            xhr.send();
+        </script>
+    <head>
+    <body>
+        <div id="visualization">
+        </div>
+    </body>
+</html>

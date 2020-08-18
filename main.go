@@ -1,11 +1,13 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
 	"os"
 
 	"github.com/marthjod/achtwache/client"
-	"github.com/marthjod/achtwache/handler"
+	"github.com/marthjod/achtwache/gui"
+	"github.com/marthjod/achtwache/nodes"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
@@ -18,6 +20,7 @@ func main() {
 		kubeConfig = os.Getenv("KUBE_CONFIG")
 		logLevel   = os.Getenv("LOGLEVEL")
 		listenAddr = os.Getenv("LISTEN_ADDR")
+		indexHTML  = os.Getenv("INDEX_HTML")
 
 		httpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name: "http_request_duration_seconds",
@@ -29,6 +32,9 @@ func main() {
 	promRegistry.MustRegister(httpRequestDuration)
 
 	// TODO
+	if indexHTML == "" {
+		indexHTML = "index.html"
+	}
 	if listenAddr == "" {
 		listenAddr = ":8080"
 	}
@@ -57,8 +63,13 @@ func main() {
 		log.Fatal().Err(err).Msg("creating client")
 	}
 
-	hdlr := handler.New(client)
-	http.Handle("/", promhttp.InstrumentHandlerDuration(httpRequestDuration, hdlr))
+	index, err := ioutil.ReadFile(indexHTML)
+	if err != nil {
+		log.Error().Err(err).Msgf("reading %s", indexHTML)
+	}
+
+	http.Handle("/", gui.NewHandler(index))
+	http.Handle("/nodes", promhttp.InstrumentHandlerDuration(httpRequestDuration, nodes.NewHandler(client)))
 	http.Handle("/metrics", promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{}))
 	log.Info().Msgf("listening on %s", listenAddr)
 	log.Fatal().Err(http.ListenAndServe(listenAddr, nil)).Msg("")

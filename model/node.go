@@ -29,9 +29,11 @@ func (n *Node) AddPods(pods []v1.Pod) {
 }
 
 type Pod struct {
-	Name   string       `json:"name"`
-	Memory res.Quantity `json:"memory"`
-	CPU    res.Quantity `json:"cpu"`
+	Name      string       `json:"name"`
+	Memory    res.Quantity `json:"memory"`
+	CPU       res.Quantity `json:"cpu"`
+	MemoryDec int64        `json:"memory_dec"`
+	CPUDec    int64        `json:"cpu_dec"`
 }
 
 func (p *Pod) FromK8s(pod v1.Pod) {
@@ -39,4 +41,6 @@ func (p *Pod) FromK8s(pod v1.Pod) {
 	req, _ := resource.PodRequestsAndLimits(&pod)
 	p.Memory = req[memoryKey]
 	p.CPU = req[cpuKey]
+	p.MemoryDec, _ = p.Memory.AsInt64()
+	p.CPUDec, _ = p.CPU.AsInt64()
 }

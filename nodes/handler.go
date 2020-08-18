@@ -1,8 +1,9 @@
-package handler
+package nodes
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -108,7 +109,7 @@ type Handler struct {
 	sem                chan struct{}
 }
 
-func New(client *client.Client) *Handler {
+func NewHandler(client *client.Client) *Handler {
 	return &Handler{
 		cache: &cache{
 			expireAfter: 30 * time.Second,
@@ -124,13 +125,16 @@ func (h *Handler) Get(ctx context.Context) ([]*model.Node, error) {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "", http.StatusMethodNotAllowed)
+	}
 	nodes, err := h.Get(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
 	if err := json.NewEncoder(w).Encode(nodes); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
 }
