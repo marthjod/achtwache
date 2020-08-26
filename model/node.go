@@ -22,9 +22,11 @@ func (n *Node) FromK8s(node v1.Node) {
 
 func (n *Node) AddPods(pods []v1.Pod) {
 	for _, pod := range pods {
-		p := &Pod{}
-		p.FromK8s(pod)
-		n.Pods = append(n.Pods, p)
+		if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodPending {
+			p := &Pod{}
+			p.FromK8s(pod)
+			n.Pods = append(n.Pods, p)
+		}
 	}
 }
 
